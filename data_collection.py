@@ -127,3 +127,18 @@ def process_data(emg, movement):
 
     write_to_csv(session_filename, row)
 # ========================================================================================
+
+
+# ====================== TIME FUNCTIONS
+
+# function to collect data for the specified duration
+def dc_duration(armband, duration):
+    # starting point for measuring time passed
+    start_time = time.monotonic()
+
+    # receive EMG samples until duration passed
+    while time.monotonic() - start_time <= duration:
+        armband.run()
+
+
+# ========================================================================================
