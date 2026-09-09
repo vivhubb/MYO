@@ -5,7 +5,7 @@ import csv
 import time
 import myo
 
-labels = ["flexion", "neutral", "extension"]
+labels = ["flexion", "neutral", "extension", "neutral"]
 
 repetitions = 10
 movement_duration = 5
@@ -132,7 +132,7 @@ def process_data(emg, movement):
 # ====================== TIME FUNCTIONS
 
 # function to collect data for the specified duration
-def dc_duration(armband, duration):
+def collect_for_duration(armband, duration):
     # starting point for measuring time passed
     start_time = time.monotonic()
 
@@ -140,5 +140,54 @@ def dc_duration(armband, duration):
     while time.monotonic() - start_time <= duration:
         armband.run()
 
+# function to collect data for each wrist position
+def dc_wrist_position(armband):
+    global current_label
+    global current_phase
+    global current_repetition
+    global fatigue
+
+    # set starting position for participant
+    print("Please place your hand in a neutral position.")
+    # participant starts session by pressing ENTER
+    input("Press ENTER when you are ready to start.")
+
+    # repeat for the specified number of repeptitions
+    for repetition in range(1, repetitions + 1):    # range(inclusive, exclusive)
+        current_repetition = repetition
+
+        # get fatigue level input for current repetition
+        fatigue = get_fatigue_input()
+
+        # display repetition information
+        print(f"\nRepetition {current_repetition} of {repetitions}")
+
+        # go through each wrist position
+        for label in labels:
+            # update current wrist position label
+            current_label = label
+
+            # =========== MOVING ===========
+            # update the current phase
+            current_phase = "moving"
+
+            # participant movement instructions
+            print(f"Please CHANGE to {current_label}")
+
+            # collect movement data
+            collect_for_duration(armband, movement_duration)
+
+            # =========== HOLDING ===========
+            # update the current phase
+            current_phase = "holding"
+
+            # participant instructions for holding
+            print(f"Please HOLD {current_label}")
+
+            # collect holding data
+            collect_for_duration(armband, holding_duration)
+
+    # participant instructions when all repetitions are complete
+    print("\nData collection complete.")
 
 # ========================================================================================
