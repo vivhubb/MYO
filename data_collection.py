@@ -191,3 +191,33 @@ def dc_wrist_position(armband):
     print("\nData collection complete.")
 
 # ========================================================================================
+
+
+# ====================== MAIN FUNCTION
+def main():
+    # create session CSV
+    create_session_csv()
+    print(f"Created: {session_filename}")
+
+    armband = Myo(mode=emg_mode.RAW)
+    armband.connect()
+
+    armband.add_emg_handler(process_data)
+
+    try:
+        dc_wrist_position(armband)
+
+    # stop the program with Ctrl+C
+    except KeyboardInterrupt:
+        print("\nData collection interrupted.")
+
+    # without this Myo armband never turns off
+    finally:
+        armband.power_off()
+        print("Myo armband turned off.")
+        armband.disconnect()
+        print("Myo armband disconnected.")
+        
+
+if __name__ == "__main__":
+    main()
