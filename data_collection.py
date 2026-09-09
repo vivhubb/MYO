@@ -15,7 +15,7 @@ current_label = ""
 current_phase = ""
 current_repetition = 0
 
-rawdata = []
+fatigue = 0
 
 # ====================== PARTICIPANT DETAILS
 
@@ -93,3 +93,17 @@ def write_to_csv(filename, row):
         csv_writer.writerow(row)
 
 # ========================================================================================
+
+# function to get user input for muscle fatigue level
+def get_fatigue_input():
+    fatigue = int(
+        input("Please enter your muscle fatigue level (1 - 5): ")
+        )
+
+    # input validation for out of range fatigue input
+    if fatigue not in range(1,6):
+        raise ValueError(
+            "Your fatigue number input has to be between 1 and 5."
+            )
+
+    return fatigue
