@@ -107,3 +107,23 @@ def get_fatigue_input():
             )
 
     return fatigue
+
+
+# ====================== DATA PROCESSING
+def process_data(emg, movement):
+    # get current timestamp
+    timestamp = datetime.now()
+
+    metadata = [timestamp, 
+                name, 
+                session_number, 
+                current_label, 
+                current_phase, 
+                current_repetition, 
+                fatigue]
+
+    # build CSV row 
+    row = metadata + list(emg)
+
+    write_to_csv(session_filename, row)
+# ========================================================================================
