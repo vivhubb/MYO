@@ -72,3 +72,24 @@ print(f"Participant's session number: {session_number}")
 session_filename = (session_folder/f"{participant_filename}_session_{session_number:02d}.csv")
 
 # ========================================================================================
+
+
+# ====================== CSV FUNCTIONS
+
+# data_collection.py headers
+dc_headers = ["timestamp", "name", "session", "label", "repetition", "fatigue",
+              "ch_01", "ch_02", "ch_03", "ch_04", "ch_05", "ch_07", "ch_08",]
+
+# function to create csv file for session and add headers
+def create_session_csv():
+    with open(session_filename, "w", newline="") as csvfile:
+        csv_writer = csv.writer(csvfile)
+        csv_writer.writerow(dc_headers)
+
+# function to write complete row to csv file
+def write_to_csv(filename, row):
+    with open(filename, "a", newline="") as csvfile:
+        csv_writer = csv.writer(csvfile)
+        csv_writer.writerow(row)
+
+# ========================================================================================
