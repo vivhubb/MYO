@@ -17,7 +17,7 @@ current_repetition = 0
 
 fatigue = 0
 
-# ====================== PARTICIPANT DETAILS
+# ====================== PARTICIPANT DETAILS ======================
 
 # participant name input
 name = input("Hello and welcome! Please enter your name here: ").strip()
@@ -29,10 +29,8 @@ if not name:
 # participant filename created based on name input
 participant_filename = name.lower().replace(" ", "_")
 
-# ========================================================================================
 
-
-# ====================== SESSION HANDLING
+# ====================== SESSION HANDLING ======================
 
 # folder containing individual session CSV files
 session_folder = Path("data/sessions")
@@ -71,10 +69,8 @@ print(f"Participant's session number: {session_number}")
 # create session's filename   |  test_session_01.csv
 session_filename = (session_folder/f"{participant_filename}_session_{session_number:02d}.csv")
 
-# ========================================================================================
 
-
-# ====================== CSV FUNCTIONS
+# ====================== CSV FUNCTIONS ======================
 
 # data_collection.py headers
 dc_headers = ["timestamp", "name", "session", "label", "repetition", "fatigue",
@@ -92,7 +88,7 @@ def write_to_csv(filename, row):
         csv_writer = csv.writer(csvfile)
         csv_writer.writerow(row)
 
-# ========================================================================================
+# ====================== PARTICIPANT FATIGUE INPUT ======================
 
 # function to get user input for muscle fatigue level
 def get_fatigue_input():
@@ -109,7 +105,7 @@ def get_fatigue_input():
     return fatigue
 
 
-# ====================== DATA PROCESSING
+# ====================== DATA PROCESSING ======================
 def process_data(emg, movement):
     # get current timestamp
     timestamp = datetime.now()
@@ -126,10 +122,9 @@ def process_data(emg, movement):
     row = metadata + list(emg)
 
     write_to_csv(session_filename, row)
-# ========================================================================================
 
 
-# ====================== TIME FUNCTIONS
+# ====================== TIME FUNCTION ======================
 
 # function to collect data for the specified duration
 def collect_for_duration(armband, duration):
@@ -139,6 +134,9 @@ def collect_for_duration(armband, duration):
     # receive EMG samples until duration passed
     while time.monotonic() - start_time <= duration:
         armband.run()
+
+
+# ====================== DATA COLLECTION ======================
 
 # function to collect data for each wrist position
 def dc_wrist_position(armband):
@@ -190,10 +188,8 @@ def dc_wrist_position(armband):
     # participant instructions when all repetitions are complete
     print("\nData collection complete.")
 
-# ========================================================================================
 
-
-# ====================== MAIN FUNCTION
+# ====================== MAIN FUNCTION ======================
 def main():
     # create session CSV
     create_session_csv()
