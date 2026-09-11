@@ -88,6 +88,7 @@ def write_to_csv(filename, row):
         csv_writer = csv.writer(csvfile)
         csv_writer.writerow(row)
 
+
 # ====================== PARTICIPANT FATIGUE INPUT ======================
 
 # function to get user input for muscle fatigue level
@@ -105,8 +106,8 @@ def get_fatigue_input():
     return fatigue
 
 
-# ====================== DATA PROCESSING ======================
-def process_data(emg, movement):
+# ====================== RECORD EMG DATA ======================
+def record_emg_data(emg, movement):
     # get current timestamp
     timestamp = datetime.now()
 
@@ -198,7 +199,7 @@ def main():
     armband = Myo(mode=emg_mode.RAW)
     armband.connect()
 
-    armband.add_emg_handler(process_data)
+    armband.add_emg_handler(record_emg_data)
 
     try:
         dc_wrist_position(armband)
