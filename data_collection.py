@@ -204,7 +204,7 @@ def dc_wrist_position():
             # =========== MOVING ===========
 
             # participant movement instructions
-            print(f"Please CHANGE to {current_label}")
+            print(f"Please CHANGE to {current_label} (3 seconds).")
 
             # turn recording on
             with data_lock:
@@ -221,7 +221,7 @@ def dc_wrist_position():
             # =========== HOLDING ===========
 
             # participant instructions for holding
-            print(f"Please HOLD {current_label}")
+            print(f"Please HOLD {current_label} (5 seconds).")
 
             # turn recording on
             with data_lock:
