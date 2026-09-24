@@ -4,10 +4,12 @@ from datetime import datetime
 import csv
 import time
 from pynput import keyboard
+import termios
+import sys
 
 labels = ["flexion", "neutral", "extension", "neutral"]
 
-repetitions = 2
+repetitions = 1
 movement_duration = 3
 holding_duration = 5
 
@@ -148,42 +150,59 @@ def dc_wrist_position(armband):
     # participant starts session by pressing ENTER
     input("Press ENTER when you are ready to start.")
 
-    with keyboard.Listener(on_press=get_fatigue_input) as listener:
 
-        # repeat for the specified number of repeptitions
-        for repetition in range(1, repetitions + 1):    # range(inclusive, exclusive)
-            current_repetition = repetition
+    # =========== DISABLE TERMINAL ECHO ===========
+    """
+    https://docs.python.org/3/library/termios.html
+    https://gist.github.com/kgriffs/5726314
+    """
+    fd = sys.stdin.fileno()
+    old_settings = termios.tcgetattr(fd)
+    new_settings = termios.tcgetattr(fd)
+    new_settings[3] = new_settings[3] & ~termios.ECHO
 
-            # display repetition information
-            print(f"\nRepetition {current_repetition} of {repetitions}")
+    try:
+        termios.tcsetattr(fd, termios.TCSADRAIN, new_settings)
 
-            # go through each wrist position
-            for label in labels:
-                # update current wrist position label
-                current_label = label
+        with keyboard.Listener(on_press=get_fatigue_input) as listener:
 
-                # =========== MOVING ===========
-                # update the current phase
-                current_phase = "moving"
+            # repeat for the specified number of repeptitions
+            for repetition in range(1, repetitions + 1):    # range(inclusive, exclusive)
+                current_repetition = repetition
 
-                # participant movement instructions
-                print(f"Please CHANGE to {current_label}. ({movement_duration} seconds)")
+                # display repetition information
+                print(f"\nRepetition {current_repetition} of {repetitions}")
 
-                # collect movement data
-                collect_for_duration(armband, movement_duration)
+                # go through each wrist position
+                for label in labels:
+                    # update current wrist position label
+                    current_label = label
 
-                # =========== HOLDING ===========
-                # update the current phase
-                current_phase = "holding"
+                    # =========== MOVING ===========
+                    # update the current phase
+                    current_phase = "moving"
 
-                # participant instructions for holding
-                print(f"Please HOLD {current_label} ({holding_duration} seconds)")
+                    # participant movement instructions
+                    print(f"Please CHANGE to {current_label}. ({movement_duration} seconds)")
 
-                # collect holding data
-                collect_for_duration(armband, holding_duration)
+                    # collect movement data
+                    collect_for_duration(armband, movement_duration)
 
-        # participant instructions when all repetitions are complete
-        print("\nData collection complete.")
+                    # =========== HOLDING ===========
+                    # update the current phase
+                    current_phase = "holding"
+
+                    # participant instructions for holding
+                    print(f"Please HOLD {current_label} ({holding_duration} seconds)")
+
+                    # collect holding data
+                    collect_for_duration(armband, holding_duration)
+
+            # participant instructions when all repetitions are complete
+            print("\nData collection complete.")
+
+    finally:
+        termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
 
 
 # ====================== MAIN FUNCTION ======================
