@@ -3,12 +3,12 @@ from pathlib import Path
 from datetime import datetime
 import csv
 import time
-import myo
+from pynput import keyboard
 
 labels = ["flexion", "neutral", "extension", "neutral"]
 
-repetitions = 10
-movement_duration = 5
+repetitions = 2
+movement_duration = 3
 holding_duration = 5
 
 current_label = ""
@@ -73,8 +73,8 @@ session_filename = (session_folder/f"{participant_filename}_session_{session_num
 # ====================== CSV FUNCTIONS ======================
 
 # data_collection.py headers
-dc_headers = ["timestamp", "name", "session", "label", "repetition", "fatigue",
-              "ch_01", "ch_02", "ch_03", "ch_04", "ch_05", "ch_07", "ch_08",]
+dc_headers = ["timestamp", "name", "session", "label", "phase", "repetition", "fatigue",
+              "ch_01", "ch_02", "ch_03", "ch_04", "ch_05", "ch_06", "ch_07", "ch_08",]
 
 # function to create csv file for session and add headers
 def create_session_csv():
@@ -89,21 +89,19 @@ def write_to_csv(filename, row):
         csv_writer.writerow(row)
 
 
-# ====================== PARTICIPANT FATIGUE INPUT ======================
+# ====================== FATIGUE INPUT EVENT LISTENER ======================
 
 # function to get user input for muscle fatigue level
-def get_fatigue_input():
-    fatigue = int(
-        input("Please enter your muscle fatigue level (1 - 5): ")
-        )
+def get_fatigue_input(key):
+    global fatigue
+    fatigue_levels = ["1", "2", "3", "4", "5"]
 
-    # input validation for out of range fatigue input
-    if fatigue not in range(1,6):
-        raise ValueError(
-            "Your fatigue number input has to be between 1 and 5."
-            )
-
-    return fatigue
+    try:
+        if key.char in fatigue_levels:
+            fatigue = int(key.char)
+    except AttributeError:
+        # ignore special keys (e.g., shift, ctrl)
+        pass
 
 
 # ====================== RECORD EMG DATA ======================
@@ -144,50 +142,48 @@ def dc_wrist_position(armband):
     global current_label
     global current_phase
     global current_repetition
-    global fatigue
 
     # set starting position for participant
-    print("Please place your hand in a neutral position.")
+    print("\nPlease place your hand in a neutral position.")
     # participant starts session by pressing ENTER
     input("Press ENTER when you are ready to start.")
 
-    # repeat for the specified number of repeptitions
-    for repetition in range(1, repetitions + 1):    # range(inclusive, exclusive)
-        current_repetition = repetition
+    with keyboard.Listener(on_press=get_fatigue_input) as listener:
 
-        # get fatigue level input for current repetition
-        fatigue = get_fatigue_input()
+        # repeat for the specified number of repeptitions
+        for repetition in range(1, repetitions + 1):    # range(inclusive, exclusive)
+            current_repetition = repetition
 
-        # display repetition information
-        print(f"\nRepetition {current_repetition} of {repetitions}")
+            # display repetition information
+            print(f"\nRepetition {current_repetition} of {repetitions}")
 
-        # go through each wrist position
-        for label in labels:
-            # update current wrist position label
-            current_label = label
+            # go through each wrist position
+            for label in labels:
+                # update current wrist position label
+                current_label = label
 
-            # =========== MOVING ===========
-            # update the current phase
-            current_phase = "moving"
+                # =========== MOVING ===========
+                # update the current phase
+                current_phase = "moving"
 
-            # participant movement instructions
-            print(f"Please CHANGE to {current_label}")
+                # participant movement instructions
+                print(f"Please CHANGE to {current_label}. ({movement_duration} seconds)")
 
-            # collect movement data
-            collect_for_duration(armband, movement_duration)
+                # collect movement data
+                collect_for_duration(armband, movement_duration)
 
-            # =========== HOLDING ===========
-            # update the current phase
-            current_phase = "holding"
+                # =========== HOLDING ===========
+                # update the current phase
+                current_phase = "holding"
 
-            # participant instructions for holding
-            print(f"Please HOLD {current_label}")
+                # participant instructions for holding
+                print(f"Please HOLD {current_label} ({holding_duration} seconds)")
 
-            # collect holding data
-            collect_for_duration(armband, holding_duration)
+                # collect holding data
+                collect_for_duration(armband, holding_duration)
 
-    # participant instructions when all repetitions are complete
-    print("\nData collection complete.")
+        # participant instructions when all repetitions are complete
+        print("\nData collection complete.")
 
 
 # ====================== MAIN FUNCTION ======================
@@ -210,8 +206,6 @@ def main():
 
     # without this Myo armband never turns off
     finally:
-        armband.power_off()
-        print("Myo armband turned off.")
         armband.disconnect()
         print("Myo armband disconnected.")
         
