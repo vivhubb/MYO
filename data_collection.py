@@ -9,7 +9,7 @@ import sys
 
 labels = ["flexion", "neutral", "extension", "neutral"]
 
-repetitions = 1
+repetitions = 10
 movement_duration = 3
 holding_duration = 5
 
@@ -72,23 +72,15 @@ print(f"Participant's session number: {session_number}")
 session_filename = (session_folder/f"{participant_filename}_session_{session_number:02d}.csv")
 
 
-# ====================== CSV FUNCTIONS ======================
+# ====================== CSV FUNCTION ======================
 
 # data_collection.py headers
 dc_headers = ["timestamp", "name", "session", "label", "phase", "repetition", "fatigue",
-              "ch_01", "ch_02", "ch_03", "ch_04", "ch_05", "ch_06", "ch_07", "ch_08",]
-
-# function to create csv file for session and add headers
-def create_session_csv():
-    with open(session_filename, "w", newline="") as csvfile:
-        csv_writer = csv.writer(csvfile)
-        csv_writer.writerow(dc_headers)
+              "ch_01", "ch_02", "ch_03", "ch_04", "ch_05", "ch_06", "ch_07", "ch_08",]  
 
 # function to write complete row to csv file
-def write_to_csv(filename, row):
-    with open(filename, "a", newline="") as csvfile:
-        csv_writer = csv.writer(csvfile)
-        csv_writer.writerow(row)
+def write_to_csv(csv_writer, row):
+    csv_writer.writerow(row)
 
 
 # ====================== FATIGUE INPUT EVENT LISTENER ======================
@@ -107,7 +99,7 @@ def get_fatigue_input(key):
 
 
 # ====================== RECORD EMG DATA ======================
-def record_emg_data(emg, movement):
+def record_emg_data(emg, movement, csv_writer):
     # get current timestamp
     timestamp = datetime.now()
 
@@ -122,7 +114,7 @@ def record_emg_data(emg, movement):
     # build CSV row 
     row = metadata + list(emg)
 
-    write_to_csv(session_filename, row)
+    write_to_csv(csv_writer, row)
 
 
 # ====================== TIME FUNCTION ======================
@@ -207,26 +199,35 @@ def dc_wrist_position(armband):
 
 # ====================== MAIN FUNCTION ======================
 def main():
-    # create session CSV
-    create_session_csv()
-    print(f"Created: {session_filename}")
+    # create and open session CSV
+    with open(session_filename, "w", newline="") as csvfile:
+        csv_writer = csv.writer(csvfile)
+        # write headers to the CSV file
+        csv_writer.writerow(dc_headers)
+        print(f"Created: {session_filename}")
 
-    armband = Myo(mode=emg_mode.RAW)
-    armband.connect()
+        # create myo armband object and connect to it
+        armband = Myo(mode=emg_mode.RAW)
 
-    armband.add_emg_handler(record_emg_data)
+        # wrapper function to pass the csv_writer to the record_emg_data function
+        def wrapper(emg, movement):
+            record_emg_data(emg, movement, csv_writer)
 
-    try:
-        dc_wrist_position(armband)
+        # myo emg handler set to the wrapper function
+        armband.add_emg_handler(wrapper)
 
-    # stop the program with Ctrl+C
-    except KeyboardInterrupt:
-        print("\nData collection interrupted.")
+        try:
+            armband.connect()
+            dc_wrist_position(armband)
 
-    # without this Myo armband never turns off
-    finally:
-        armband.disconnect()
-        print("Myo armband disconnected.")
+        # stop the program with Ctrl+C
+        except KeyboardInterrupt:
+            print("\nData collection interrupted.")
+
+        # without this Myo armband never turns off
+        finally:
+            armband.disconnect()
+            print("Myo armband disconnected.")
         
 
 if __name__ == "__main__":
