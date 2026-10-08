@@ -18,21 +18,26 @@ clock = pygame.time.Clock()
 running = True
 
 # =========== FONT ===========
-text_font_big = pygame.font.SysFont("robotoserif.ttf", 32, italic=True)
+text_font_big = pygame.font.SysFont("robotoserif.ttf", 36, italic=True)
 text_font_medium = pygame.font.SysFont("robotoserif.ttf", 28)
 
 # =========== TEXT ===========
 welcome_text = "Hello and Welcome! Thank you for participating in this study."
-p_id_text = "Please enter your Participant ID in the box below."
-p_id_input = ""
+p_id_prompt = "Please enter your Participant ID in the box below."
+p_gender_prompt = "Please enter your Gender in the box below."
 
 # =========== TEXTBOX ===========
-textbox = TextBox(screen, 50, 125, 50, 35, font=text_font_medium, placeholderText="ID",
+id_textbox = TextBox(screen, 50, 125, 50, 35, font=text_font_medium, placeholderText="ID",
                   borderColour=(255,255,255), radius=8, borderThickness=2)
+gender_textbox = TextBox(screen, 50, 205, 200, 35, font=text_font_medium, placeholderText="Gender",
+                    borderColour=(255,255,255), radius=8, borderThickness=2)
 
 # =========== COLORS ===========
 black = (0, 0, 0)
 white = (255, 255, 255)
+
+# =========== CSV ===========
+
 
 
 # =========== HELPER FUNCITON ===========
@@ -64,8 +69,12 @@ while running:
     https://www.youtube.com/watch?v=Rvcyf4HsWiw
     '''
     # display get participant ID prompt on the screen
-    id_text_surface = text_font_medium.render(p_id_text, True, white)
+    id_text_surface = text_font_medium.render(p_id_prompt, True, white)
     screen.blit(id_text_surface, (50, 100))
+
+    # display get participant gender prompt on the screen
+    gender_text_surface = text_font_medium.render(p_gender_prompt, True, white)
+    screen.blit(gender_text_surface, (50, 180))
 
     pygame_widgets.update(events)
 
