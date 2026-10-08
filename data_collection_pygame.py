@@ -9,7 +9,7 @@ from pygame_widgets.button import Button
 pygame.init()
 
 # set screen width and height
-screen_width = 1000
+screen_width = 1200
 screen_height = 700
 # pygame display size setup
 screen = pygame.display.set_mode((screen_width, screen_height))
@@ -27,12 +27,27 @@ text_font_medium = pygame.font.SysFont("robotoserif.ttf", 24)
 # =========== TEXT ===========
 welcome_text = "Hello and Welcome! Thank you for participating in this study."
 p_id_prompt = "Please enter your Participant ID in the box below."
+p_age_prompt = "Please enter your Age in the box below."
 p_gender_prompt = "Please enter your Gender in the box below."
+p_height_prompt = "Please enter your Height in the box below."
+p_weight_prompt = "Please enter your Weight in the box below."
+p_wrist_prompt = "Please enter your Wrist Circumference in the box below."
+p_forearm_prompt = "Please enter your Forearm Length in the box below."
 
 # =========== TEXTBOX ===========
 id_textbox = TextBox(screen, 50, 100, 50, 32, font=text_font_medium, placeholderText="ID",
                   borderColour=(255,255,255), radius=8, borderThickness=2)
-gender_textbox = TextBox(screen, 50, 180, 200, 32, font=text_font_medium, placeholderText="Gender",
+age_textbox = TextBox(screen, 50, 180, 50, 32, font=text_font_medium, placeholderText="Age",
+                    borderColour=(255,255,255), radius=8, borderThickness=2)
+gender_textbox = TextBox(screen, 50, 260, 200, 32, font=text_font_medium, placeholderText="Gender",
+                    borderColour=(255,255,255), radius=8, borderThickness=2)
+height_textbox = TextBox(screen, 50, 340, 200, 32, font=text_font_medium, placeholderText="Height",
+                    borderColour=(255,255,255), radius=8, borderThickness=2)
+weight_textbox = TextBox(screen, 50, 420, 200, 32, font=text_font_medium, placeholderText="Weight",
+                    borderColour=(255,255,255), radius=8, borderThickness=2)
+wrist_textbox = TextBox(screen, 50, 500, 200, 32, font=text_font_medium, placeholderText="Wrist",
+                    borderColour=(255,255,255), radius=8, borderThickness=2)
+forearm_textbox = TextBox(screen, 50, 580, 200, 32, font=text_font_medium, placeholderText="Forearm",
                     borderColour=(255,255,255), radius=8, borderThickness=2)
 
 # =========== COLORS ===========
@@ -62,8 +77,13 @@ def create_participant_csv():
         print(f"Created: {participant_filename}")
 
 # function to write complete row to csv file
-def write_to_csv(csv_writer, row):
+def write_csv_row(csv_writer, row):
     csv_writer.writerow(row)
+
+# function to write participant data to csv file
+def write_to_csv(row):
+    with open(participant_filename, "a", newline="") as csvfile:
+        write_csv_row(csv.writer(csvfile), row)
 
 # =========== HELPER FUNCITON ===========
 '''
@@ -83,12 +103,21 @@ if not participant_filename.exists():
 '''
 https://pygamewidgets.readthedocs.io/en/stable/widgets/button/
 '''
-button = Button(screen, 50, 600, 100, 32, 
+button = Button(screen, 50, 650, 100, 32, 
                 text='Submit', font=text_font_medium, 
                 radius=8, borderThickness=2,
                 inactiveColour=grey, 
                 hoverColour=pygame.Color('aquamarine'), 
-                pressedColour=pygame.Color('mediumseagreen'))
+                pressedColour=pygame.Color('mediumseagreen'),
+                onClick=lambda: write_to_csv([
+                    id_textbox.getText(), 
+                    age_textbox.getText(), 
+                    gender_textbox.getText(), 
+                    height_textbox.getText(), 
+                    weight_textbox.getText(), 
+                    wrist_textbox.getText(), 
+                    forearm_textbox.getText()
+                    ]))
 
 # =========== MAIN LOOP ===========
 # main loop
@@ -113,9 +142,29 @@ while running:
     id_text_surface = text_font_medium.render(p_id_prompt, True, white)
     screen.blit(id_text_surface, (50, 75))
 
+    # display get participant age prompt on the screen
+    age_text_surface = text_font_medium.render(p_age_prompt, True, white)
+    screen.blit(age_text_surface, (50, 155))
+
     # display get participant gender prompt on the screen
     gender_text_surface = text_font_medium.render(p_gender_prompt, True, white)
-    screen.blit(gender_text_surface, (50, 155))
+    screen.blit(gender_text_surface, (50, 235))
+
+    # display get participant height prompt on the screen
+    height_text_surface = text_font_medium.render(p_height_prompt, True, white)
+    screen.blit(height_text_surface, (50, 315))
+
+    # display get participant weight prompt on the screen
+    weight_text_surface = text_font_medium.render(p_weight_prompt, True, white)
+    screen.blit(weight_text_surface, (50, 395))
+
+    # display get participant wrist circumference prompt on the screen
+    wrist_text_surface = text_font_medium.render(p_wrist_prompt, True, white)
+    screen.blit(wrist_text_surface, (50, 475))
+
+    # display get participant forearm length prompt on the screen
+    forearm_text_surface = text_font_medium.render(p_forearm_prompt, True, white)
+    screen.blit(forearm_text_surface, (50, 555))
 
     # update the textboxes and button
     pygame_widgets.update(events)
