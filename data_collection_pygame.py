@@ -3,6 +3,7 @@ import pygame_widgets
 from pygame_widgets.textbox import TextBox
 from pathlib import Path
 import csv
+from pygame_widgets.button import Button
 
 # initialize pygame
 pygame.init()
@@ -21,7 +22,7 @@ running = True
 
 # =========== FONT ===========
 text_font_big = pygame.font.SysFont("robotoserif.ttf", 36, italic=True)
-text_font_medium = pygame.font.SysFont("robotoserif.ttf", 28)
+text_font_medium = pygame.font.SysFont("robotoserif.ttf", 24)
 
 # =========== TEXT ===========
 welcome_text = "Hello and Welcome! Thank you for participating in this study."
@@ -29,14 +30,15 @@ p_id_prompt = "Please enter your Participant ID in the box below."
 p_gender_prompt = "Please enter your Gender in the box below."
 
 # =========== TEXTBOX ===========
-id_textbox = TextBox(screen, 50, 125, 50, 35, font=text_font_medium, placeholderText="ID",
+id_textbox = TextBox(screen, 50, 100, 50, 32, font=text_font_medium, placeholderText="ID",
                   borderColour=(255,255,255), radius=8, borderThickness=2)
-gender_textbox = TextBox(screen, 50, 205, 200, 35, font=text_font_medium, placeholderText="Gender",
+gender_textbox = TextBox(screen, 50, 180, 200, 32, font=text_font_medium, placeholderText="Gender",
                     borderColour=(255,255,255), radius=8, borderThickness=2)
 
 # =========== COLORS ===========
 black = (0, 0, 0)
 white = (255, 255, 255)
+grey = (194, 197, 204)
 
 # =========== CSV FOLDERS ===========
 # folder containing participant CSV file
@@ -77,12 +79,23 @@ def display_text(text, font, text_color, x, y):
 if not participant_filename.exists():
     create_participant_csv()
 
+# =========== BUTTON ===========
+'''
+https://pygamewidgets.readthedocs.io/en/stable/widgets/button/
+'''
+button = Button(screen, 50, 600, 100, 32, 
+                text='Submit', font=text_font_medium, 
+                radius=8, borderThickness=2,
+                inactiveColour=grey, 
+                hoverColour=pygame.Color('aquamarine'), 
+                pressedColour=pygame.Color('mediumseagreen'))
+
 # =========== MAIN LOOP ===========
 # main loop
 while running:
     # fill the screen with black color
     screen.fill(black)
-
+    # get all the events that have occurred since the last frame
     events = pygame.event.get()
     
     for event in events:
@@ -91,19 +104,20 @@ while running:
             running = False
 
     # display welcome text on the screen
-    display_text(welcome_text, text_font_big, white, 50, 50)
+    display_text(welcome_text, text_font_big, pygame.Color('blanchedalmond'), 50, 25)
 
     '''
     https://www.youtube.com/watch?v=Rvcyf4HsWiw
     '''
     # display get participant ID prompt on the screen
     id_text_surface = text_font_medium.render(p_id_prompt, True, white)
-    screen.blit(id_text_surface, (50, 100))
+    screen.blit(id_text_surface, (50, 75))
 
     # display get participant gender prompt on the screen
     gender_text_surface = text_font_medium.render(p_gender_prompt, True, white)
-    screen.blit(gender_text_surface, (50, 180))
+    screen.blit(gender_text_surface, (50, 155))
 
+    # update the textboxes and button
     pygame_widgets.update(events)
 
     pygame.display.flip()
