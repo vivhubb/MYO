@@ -20,6 +20,7 @@ clock = pygame.time.Clock()
 
 running = True
 error_message = ""
+current_screen = "questionnaire"
 
 # =========== FONT ===========
 text_font_big = pygame.font.SysFont("robotoserif.ttf", 36, italic=True)
@@ -91,7 +92,8 @@ def validate_input(text):
     return text.strip() != ""
 
 def validate_all_inputs():
-    global error_message
+    global error_message, current_screen
+    textboxes = [id_textbox, age_textbox, gender_textbox, height_textbox, weight_textbox, wrist_textbox, forearm_textbox]
 
     row = [
         id_textbox.getText(),
@@ -109,6 +111,12 @@ def validate_all_inputs():
             return 
 
     write_to_csv(row)
+
+    for widget in textboxes:        
+        widget.hide()
+        button.hide()
+
+    current_screen = "data collection start"
 
 # =========== HELPER FUNCITON ===========
 '''
@@ -136,6 +144,17 @@ button = Button(screen, 50, 650, 100, 32,
                 pressedColour=pygame.Color('mediumseagreen'),
                 onClick=validate_all_inputs)
 
+
+# =========== IMAGES ===========
+neutral_image = pygame.image.load("media/pictures/neutral.png")
+neutral_image = pygame.transform.scale(neutral_image, (700, 466))
+
+extension_image = pygame.image.load("media/pictures/extension.png")
+extension_image = pygame.transform.scale(extension_image, (700, 466))
+
+flexion_image = pygame.image.load("media/pictures/flexion.png")
+flexion_image = pygame.transform.scale(flexion_image, (700, 466))
+
 # =========== MAIN LOOP ===========
 # main loop
 while running:
@@ -148,42 +167,54 @@ while running:
         # if user clicks X to close the pygame window
         if event.type == pygame.QUIT:
             running = False
+        if current_screen == "data collection start":
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:
+                    current_screen = "data collection"
 
-    # display welcome text on the screen
-    display_text(welcome_text, text_font_big, pygame.Color('blanchedalmond'), 50, 25)
+    if current_screen == "questionnaire":
+    
+        # display welcome text on the screen
+        display_text(welcome_text, text_font_big, pygame.Color('blanchedalmond'), 50, 25)
 
-    '''
-    https://www.youtube.com/watch?v=Rvcyf4HsWiw
-    '''
-    # display get participant ID prompt on the screen
-    id_text_surface = text_font_medium.render(p_id_prompt, True, white)
-    screen.blit(id_text_surface, (50, 75))
+        '''
+        https://www.youtube.com/watch?v=Rvcyf4HsWiw
+        '''
+        # display get participant ID prompt on the screen
+        id_text_surface = text_font_medium.render(p_id_prompt, True, white)
+        screen.blit(id_text_surface, (50, 75))
 
-    # display get participant age prompt on the screen
-    age_text_surface = text_font_medium.render(p_age_prompt, True, white)
-    screen.blit(age_text_surface, (50, 155))
+        # display get participant age prompt on the screen
+        age_text_surface = text_font_medium.render(p_age_prompt, True, white)
+        screen.blit(age_text_surface, (50, 155))
 
-    # display get participant gender prompt on the screen
-    gender_text_surface = text_font_medium.render(p_gender_prompt, True, white)
-    screen.blit(gender_text_surface, (50, 235))
+        # display get participant gender prompt on the screen
+        gender_text_surface = text_font_medium.render(p_gender_prompt, True, white)
+        screen.blit(gender_text_surface, (50, 235))
 
-    # display get participant height prompt on the screen
-    height_text_surface = text_font_medium.render(p_height_prompt, True, white)
-    screen.blit(height_text_surface, (50, 315))
+        # display get participant height prompt on the screen
+        height_text_surface = text_font_medium.render(p_height_prompt, True, white)
+        screen.blit(height_text_surface, (50, 315))
 
-    # display get participant weight prompt on the screen
-    weight_text_surface = text_font_medium.render(p_weight_prompt, True, white)
-    screen.blit(weight_text_surface, (50, 395))
+        # display get participant weight prompt on the screen
+        weight_text_surface = text_font_medium.render(p_weight_prompt, True, white)
+        screen.blit(weight_text_surface, (50, 395))
 
-    # display get participant wrist circumference prompt on the screen
-    wrist_text_surface = text_font_medium.render(p_wrist_prompt, True, white)
-    screen.blit(wrist_text_surface, (50, 475))
+        # display get participant wrist circumference prompt on the screen
+        wrist_text_surface = text_font_medium.render(p_wrist_prompt, True, white)
+        screen.blit(wrist_text_surface, (50, 475))
 
-    # display get participant forearm length prompt on the screen
-    forearm_text_surface = text_font_medium.render(p_forearm_prompt, True, white)
-    screen.blit(forearm_text_surface, (50, 555))
+        # display get participant forearm length prompt on the screen
+        forearm_text_surface = text_font_medium.render(p_forearm_prompt, True, white)
+        screen.blit(forearm_text_surface, (50, 555))
 
-    display_text(error_message, text_font_medium, pygame.Color('red'), 175, 655)
+        display_text(error_message, text_font_medium, pygame.Color('red'), 175, 655)
+
+    elif current_screen == "data collection start":
+        display_text("Please place your hand in a NEUTRAL position and follow the instructions on the screen.", text_font_big, pygame.Color('blanchedalmond'), 50, 25)
+        screen.blit(neutral_image, (50, 100))
+        display_text("Press ENTER to continue.", text_font_medium, pygame.Color('blanchedalmond'), 50, 600)
+
 
     # update the textboxes and button
     pygame_widgets.update(events)
