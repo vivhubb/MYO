@@ -6,15 +6,13 @@ import csv
 from pygame_widgets.button import Button
 import time
 from pyomyo import Myo, emg_mode
+from datetime import datetime
 
 # initialize pygame
 pygame.init()
 
 # clock to control the frame rate
 clock = pygame.time.Clock()
-
-myo = Myo(mode=emg_mode.RAW)
-myo_connected = False
 
 # =========== SCREEN ===========
 # set screen width and height
@@ -48,6 +46,10 @@ start_time = None
 
 participant_id = ""
 
+session_number = 0
+session_csvfile = None
+session_writer = None
+
 # =========== FONT ===========
 text_font_big = pygame.font.SysFont("robotoserif.ttf", 36, italic=True)
 text_font_medium = pygame.font.SysFont("robotoserif.ttf", 24)
@@ -78,14 +80,7 @@ wrist_textbox = TextBox(screen, 50, 430, 210, 32, font=text_font_medium, placeho
 forearm_textbox = TextBox(screen, 50, 510, 200, 32, font=text_font_medium, placeholderText="Forearm Length (cm)",
                     borderColour=(255,255,255), radius=8, borderThickness=2)
 
-questionnaire_textboxes = [
-    age_textbox,
-    gender_textbox,
-    height_textbox,
-    weight_textbox,
-    wrist_textbox,
-    forearm_textbox
-]
+questionnaire_textboxes = [age_textbox, gender_textbox, height_textbox, weight_textbox, wrist_textbox, forearm_textbox]
 
 # hide questionnaire textboxes on the welcome screen
 for widget in questionnaire_textboxes:
@@ -101,6 +96,10 @@ grey = (194, 197, 204)
 participant_folder = Path("data/participants")
 participant_folder.mkdir(parents=True, exist_ok=True)
 
+# folder containing individual session CSV files
+session_folder = Path("data/sessions")
+session_folder.mkdir(parents=True, exist_ok=True)
+
 # =========== CSV FILES ===========
 # participant csv file
 participant_filename = participant_folder/"participants_data.csv"
@@ -108,6 +107,8 @@ participant_filename = participant_folder/"participants_data.csv"
 # =========== CSV ===========
 # participant CSV headers
 p_headers = ["participant_id", "age", "gender", "height", "weight", "wrist_circumference", "forearm_length"]
+dc_headers = ["timestamp", "participant_id", "session", "label", "phase", "repetition",
+              "ch_01", "ch_02", "ch_03", "ch_04", "ch_05", "ch_06", "ch_07", "ch_08",]
 
 # function to create and open participant CSV
 def create_participant_csv():
@@ -126,6 +127,74 @@ def write_to_csv(row):
     with open(participant_filename, "a", newline="") as csvfile:
         write_csv_row(csv.writer(csvfile), row)
 
+# function to get the next session number for the participant
+def get_session_number(participant_id):
+    # find the participant's session files
+    existing_files = session_folder.glob(f"{participant_id}_session_*.csv")
+    session_numbers = []
+
+    for file in existing_files:
+        # get session number part from the filename
+        session_part = file.stem.split("_session_")[-1]
+    
+        try:
+            session_numbers.append(int(session_part))
+        except ValueError:
+            # ignore files with different naming pattern
+            continue
+    
+    # if this is the participant's first session
+    if not session_numbers:
+        return 1
+    
+    return max(session_numbers) + 1
+
+# function to create an dopen session CSV
+def open_session_csv():
+    global participant_id, session_number, session_csvfile, session_writer
+
+    participant_id = id_textbox.getText().strip()
+
+    session_number = get_session_number(participant_id)
+
+    # create session's filename
+    session_filename = (session_folder/f"{participant_id}_session_{session_number:02d}.csv")
+
+    # create new file without overwriting existing session
+    session_csvfile = open(session_filename, "x", newline="")
+    session_writer = csv.writer(session_csvfile)
+    session_writer.writerow(dc_headers)
+
+# funtion to close session CSV
+def close_session_csv():
+    global session_csvfile, session_writer
+
+    if session_csvfile is not None:
+        session_csvfile.close()
+        session_csvfile = None
+        session_writer = None
+
+# function to record EMG data with current session details
+def record_emg_data(emg, movement, csv_writer):
+    # get current timestamp
+    timestamp = datetime.now()
+
+    metadata = [timestamp, participant_id, session_number, current_label, current_phase, current_repetition]
+
+    # build CSV row 
+    row = metadata + list(emg)
+    write_csv_row(csv_writer, row)
+
+# wrapper function to pass the csv_writer to the record_emg_data function
+def wrapper(emg, movement):
+    if current_screen == "data collection":
+        record_emg_data(emg, movement, session_writer)
+
+# =========== MYO ===========
+myo = Myo(mode=emg_mode.RAW)
+myo.add_emg_handler(wrapper)
+myo_connected = False
+
 # =========== INPUT VALIDATION ===========
 # function to check for no input
 def validate_input(text):
@@ -134,15 +203,7 @@ def validate_input(text):
 # function to validate and save questionnaire answers
 def validate_all_inputs():
     global error_message, current_screen
-    textboxes = [
-        id_textbox, 
-        age_textbox, 
-        gender_textbox, 
-        height_textbox, 
-        weight_textbox, 
-        wrist_textbox, 
-        forearm_textbox
-    ]
+    textboxes = [id_textbox, age_textbox, gender_textbox, height_textbox, weight_textbox, wrist_textbox, forearm_textbox]
 
     row = [
         id_textbox.getText().strip(),
@@ -270,10 +331,18 @@ try:
                     if event.key == pygame.K_RETURN:
                         try:
                             myo.connect()
-                        except Exception as error:
-                            error_message = f"Error connecting to Myo: {error}"
-                        else:
                             myo_connected = True
+                            open_session_csv()
+                        except Exception as error:
+                            error_message = f"Error collecting data: {error}"
+                            # close file if session failed
+                            close_session_csv()
+
+                            # disconnect before another attempt
+                            if myo_connected:
+                                myo.disconnect()
+                                myo_connected = False
+                        else:
                             error_message = ""
 
                             current_screen = "data collection"
@@ -304,6 +373,9 @@ try:
                         else:
                             # go to final screen when repetitions end
                             current_screen = "data collection complete"
+
+                            # close session csv 
+                            close_session_csv()
 
                     if current_screen == "data collection":
                         current_label = labels[label_index]
@@ -407,5 +479,8 @@ finally:
             myo.disconnect()
             print("Myo disconnected.")
     finally:
-        # quit the program
-        pygame.quit()
+        try:
+            close_session_csv()
+        finally:
+            # quit the program
+            pygame.quit()
