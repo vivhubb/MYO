@@ -19,6 +19,7 @@ pygame.display.set_caption("Data Collection")
 clock = pygame.time.Clock()
 
 running = True
+error_message = ""
 
 # =========== FONT ===========
 text_font_big = pygame.font.SysFont("robotoserif.ttf", 36, italic=True)
@@ -85,6 +86,30 @@ def write_to_csv(row):
     with open(participant_filename, "a", newline="") as csvfile:
         write_csv_row(csv.writer(csvfile), row)
 
+# =========== INPUT VALIDATION ===========
+def validate_input(text):
+    return text.strip() != ""
+
+def validate_all_inputs():
+    global error_message
+
+    row = [
+        id_textbox.getText(),
+        age_textbox.getText(),
+        gender_textbox.getText(),
+        height_textbox.getText(),
+        weight_textbox.getText(),
+        wrist_textbox.getText(),
+        forearm_textbox.getText()
+    ]
+
+    for answer in row:
+        if not validate_input(answer):
+            error_message = "**Please fill in all the fields before submitting!"
+            return 
+
+    write_to_csv(row)
+
 # =========== HELPER FUNCITON ===========
 '''
 https://www.youtube.com/watch?v=ndtFoWWBAoE
@@ -109,15 +134,7 @@ button = Button(screen, 50, 650, 100, 32,
                 inactiveColour=grey, 
                 hoverColour=pygame.Color('aquamarine'), 
                 pressedColour=pygame.Color('mediumseagreen'),
-                onClick=lambda: write_to_csv([
-                    id_textbox.getText(), 
-                    age_textbox.getText(), 
-                    gender_textbox.getText(), 
-                    height_textbox.getText(), 
-                    weight_textbox.getText(), 
-                    wrist_textbox.getText(), 
-                    forearm_textbox.getText()
-                    ]))
+                onClick=validate_all_inputs)
 
 # =========== MAIN LOOP ===========
 # main loop
@@ -165,6 +182,8 @@ while running:
     # display get participant forearm length prompt on the screen
     forearm_text_surface = text_font_medium.render(p_forearm_prompt, True, white)
     screen.blit(forearm_text_surface, (50, 555))
+
+    display_text(error_message, text_font_medium, pygame.Color('red'), 175, 655)
 
     # update the textboxes and button
     pygame_widgets.update(events)
