@@ -4,23 +4,40 @@ from pygame_widgets.textbox import TextBox
 from pathlib import Path
 import csv
 from pygame_widgets.button import Button
+import time
 
 # initialize pygame
 pygame.init()
 
+clock = pygame.time.Clock()
+
+# =========== SCREEN ===========
 # set screen width and height
 screen_width = 1200
 screen_height = 700
 # pygame display size setup
 screen = pygame.display.set_mode((screen_width, screen_height))
 # set window title
-pygame.display.set_caption("Data Collection")
+pygame.display.set_caption("MYO Project")
 
-clock = pygame.time.Clock()
-
+# =========== VARIABLES ===========
 running = True
 error_message = ""
+
 current_screen = "questionnaire"
+
+labels = ["flexion", "neutral", "extension", "neutral"]
+label_index = 0
+repetition = 1
+
+movement_duration = 3
+holding_duration = 5
+
+current_label = ""
+current_phase = ""
+current_repetition = 0
+
+start_time = None
 
 # =========== FONT ===========
 text_font_big = pygame.font.SysFont("robotoserif.ttf", 36, italic=True)
@@ -28,13 +45,13 @@ text_font_medium = pygame.font.SysFont("robotoserif.ttf", 24)
 
 # =========== TEXT ===========
 welcome_text = "Hello and Welcome! Thank you for participating in this study."
-p_id_prompt = "Please enter your Participant ID in the box below."
+p_id_prompt = "Please enter your assigned Participant ID in the box below."
 p_age_prompt = "Please enter your Age in the box below."
 p_gender_prompt = "Please enter your Gender in the box below."
-p_height_prompt = "Please enter your Height in the box below."
-p_weight_prompt = "Please enter your Weight in the box below."
-p_wrist_prompt = "Please enter your Wrist Circumference in the box below."
-p_forearm_prompt = "Please enter your Forearm Length in the box below."
+p_height_prompt = "Please enter your Height (cm) in the box below."
+p_weight_prompt = "Please enter your Weight (kg) in the box below."
+p_wrist_prompt = "Please enter your Wrist Circumference (cm) in the box below."
+p_forearm_prompt = "Please enter your Forearm Length (cm) in the box below."
 
 # =========== TEXTBOX ===========
 id_textbox = TextBox(screen, 50, 100, 50, 32, font=text_font_medium, placeholderText="ID",
@@ -43,13 +60,13 @@ age_textbox = TextBox(screen, 50, 180, 50, 32, font=text_font_medium, placeholde
                     borderColour=(255,255,255), radius=8, borderThickness=2)
 gender_textbox = TextBox(screen, 50, 260, 200, 32, font=text_font_medium, placeholderText="Gender",
                     borderColour=(255,255,255), radius=8, borderThickness=2)
-height_textbox = TextBox(screen, 50, 340, 200, 32, font=text_font_medium, placeholderText="Height",
+height_textbox = TextBox(screen, 50, 340, 150, 32, font=text_font_medium, placeholderText="Height (cm)",
                     borderColour=(255,255,255), radius=8, borderThickness=2)
-weight_textbox = TextBox(screen, 50, 420, 200, 32, font=text_font_medium, placeholderText="Weight",
+weight_textbox = TextBox(screen, 50, 420, 150, 32, font=text_font_medium, placeholderText="Weight (kg)",
                     borderColour=(255,255,255), radius=8, borderThickness=2)
-wrist_textbox = TextBox(screen, 50, 500, 200, 32, font=text_font_medium, placeholderText="Wrist",
+wrist_textbox = TextBox(screen, 50, 500, 210, 32, font=text_font_medium, placeholderText="Wrist Circumference (cm)",
                     borderColour=(255,255,255), radius=8, borderThickness=2)
-forearm_textbox = TextBox(screen, 50, 580, 200, 32, font=text_font_medium, placeholderText="Forearm",
+forearm_textbox = TextBox(screen, 50, 580, 200, 32, font=text_font_medium, placeholderText="Forearm Length (cm)",
                     borderColour=(255,255,255), radius=8, borderThickness=2)
 
 # =========== COLORS ===========
@@ -140,20 +157,15 @@ button = Button(screen, 50, 650, 100, 32,
                 text='Submit', font=text_font_medium, 
                 radius=8, borderThickness=2,
                 inactiveColour=grey, 
-                hoverColour=pygame.Color('aquamarine'), 
+                hoverColour=pygame.Color('mediumseagreen'), 
                 pressedColour=pygame.Color('mediumseagreen'),
                 onClick=validate_all_inputs)
 
 
 # =========== IMAGES ===========
 neutral_image = pygame.image.load("media/pictures/neutral.png")
-neutral_image = pygame.transform.scale(neutral_image, (700, 466))
-
 extension_image = pygame.image.load("media/pictures/extension.png")
-extension_image = pygame.transform.scale(extension_image, (700, 466))
-
 flexion_image = pygame.image.load("media/pictures/flexion.png")
-flexion_image = pygame.transform.scale(flexion_image, (700, 466))
 
 # =========== MAIN LOOP ===========
 # main loop
@@ -171,6 +183,30 @@ while running:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RETURN:
                     current_screen = "data collection"
+                    label_index = 0
+                    current_label = labels[label_index]
+                    current_phase = "moving"
+                    current_repetition = 1
+                    start_time = time.monotonic()
+
+    if current_screen == "data collection":
+        elapsed_time = time.monotonic() - start_time
+
+        if current_phase == "moving":
+            if elapsed_time >= movement_duration:
+                current_phase = "holding"
+                start_time = time.monotonic()
+
+        elif current_phase == "holding":
+            if elapsed_time >= holding_duration:
+                label_index += 1
+
+                if label_index < len(labels):
+                    current_label = labels[label_index]
+                    current_phase = "moving"
+                    start_time = time.monotonic()
+                else:
+                    current_screen = "data collection complete"
 
     if current_screen == "questionnaire":
     
@@ -214,6 +250,26 @@ while running:
         display_text("Please place your hand in a NEUTRAL position and follow the instructions on the screen.", text_font_big, pygame.Color('blanchedalmond'), 50, 25)
         screen.blit(neutral_image, (50, 100))
         display_text("Press ENTER to continue.", text_font_medium, pygame.Color('blanchedalmond'), 50, 600)
+
+    elif current_screen == "data collection":
+        if current_phase == "moving":
+            prompt = (f"Please CHANGE to {current_label.upper()} (3 seconds).")
+        else:
+            prompt = (f"Please HOLD {current_label.upper()} (5 seconds).")
+
+        if current_label == "flexion":
+            current_image = flexion_image
+        elif current_label == "neutral":
+            current_image = neutral_image
+        elif current_label == "extension":
+            current_image = extension_image
+
+        display_text(prompt, text_font_big, pygame.Color('blanchedalmond'), 50, 25)
+        display_text(f'Repetition: {current_repetition}', text_font_medium, white, 1000, 25)
+        screen.blit(current_image, (50, 75))
+
+    else:
+        current_screen == "data collection complete"
 
 
     # update the textboxes and button
