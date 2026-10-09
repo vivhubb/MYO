@@ -270,6 +270,8 @@ while running:
 
     else:
         current_screen == "data collection complete"
+        display_text("Data collection complete. Thank you for participating!", text_font_big, pygame.Color('blanchedalmond'), 250, 200)
+        display_text("You may now close the program window.", text_font_medium, pygame.Color('blanchedalmond'), 50, 500)
 
 
     # update the textboxes and button
