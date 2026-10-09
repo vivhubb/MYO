@@ -28,7 +28,8 @@ current_screen = "questionnaire"
 
 labels = ["flexion", "neutral", "extension", "neutral"]
 label_index = 0
-repetition = 1
+
+repetitions = 2
 
 movement_duration = 3
 holding_duration = 5
@@ -110,7 +111,15 @@ def validate_input(text):
 
 def validate_all_inputs():
     global error_message, current_screen
-    textboxes = [id_textbox, age_textbox, gender_textbox, height_textbox, weight_textbox, wrist_textbox, forearm_textbox]
+    textboxes = [
+        id_textbox, 
+        age_textbox, 
+        gender_textbox, 
+        height_textbox, 
+        weight_textbox, 
+        wrist_textbox, 
+        forearm_textbox
+    ]
 
     row = [
         id_textbox.getText(),
@@ -201,12 +210,17 @@ while running:
             if elapsed_time >= holding_duration:
                 label_index += 1
 
-                if label_index < len(labels):
+                if label_index >= len(labels):
+                    if current_repetition < repetitions:
+                        current_repetition += 1
+                        label_index = 0
+                    else:
+                        current_screen = "data collection complete"
+
+                if current_screen == "data collection":
                     current_label = labels[label_index]
                     current_phase = "moving"
                     start_time = time.monotonic()
-                else:
-                    current_screen = "data collection complete"
 
     if current_screen == "questionnaire":
     
@@ -247,9 +261,11 @@ while running:
         display_text(error_message, text_font_medium, pygame.Color('red'), 175, 655)
 
     elif current_screen == "data collection start":
-        display_text("Please place your hand in a NEUTRAL position and follow the instructions on the screen.", text_font_big, pygame.Color('blanchedalmond'), 50, 25)
+        display_text("Please place your hand in a NEUTRAL position and follow the instructions on the screen.", 
+                     text_font_big, pygame.Color('blanchedalmond'), 50, 25)
         screen.blit(neutral_image, (50, 100))
-        display_text("Press ENTER to continue.", text_font_medium, pygame.Color('blanchedalmond'), 50, 600)
+        display_text("Press ENTER to continue.", 
+                     text_font_medium, pygame.Color('blanchedalmond'), 50, 600)
 
     elif current_screen == "data collection":
         if current_phase == "moving":
@@ -265,13 +281,15 @@ while running:
             current_image = extension_image
 
         display_text(prompt, text_font_big, pygame.Color('blanchedalmond'), 50, 25)
-        display_text(f'Repetition: {current_repetition}', text_font_medium, white, 1000, 25)
+        display_text(f'Repetition: {current_repetition} of {repetitions}', 
+                     text_font_medium, white, 1000, 25)
         screen.blit(current_image, (50, 75))
 
-    else:
-        current_screen == "data collection complete"
-        display_text("Data collection complete. Thank you for participating!", text_font_big, pygame.Color('blanchedalmond'), 250, 200)
-        display_text("You may now close the program window.", text_font_medium, pygame.Color('blanchedalmond'), 50, 500)
+    elif current_screen == "data collection complete":
+        display_text("Data collection complete. Thank you for participating!", 
+                     text_font_big, pygame.Color('blanchedalmond'), 250, 200)
+        display_text("You may now close the program window.", 
+                     text_font_medium, pygame.Color('blanchedalmond'), 50, 500)
 
 
     # update the textboxes and button
