@@ -5,11 +5,15 @@ from pathlib import Path
 import csv
 from pygame_widgets.button import Button
 import time
+from pyomyo import Myo, emg_mode
 
 # initialize pygame
 pygame.init()
 
 clock = pygame.time.Clock()
+
+myo = Myo(mode=emg_mode.RAW)
+myo_connected = False
 
 # =========== SCREEN ===========
 # set screen width and height
@@ -177,126 +181,147 @@ extension_image = pygame.image.load("media/pictures/extension.png")
 flexion_image = pygame.image.load("media/pictures/flexion.png")
 
 # =========== MAIN LOOP ===========
-# main loop
-while running:
-    # fill the screen with black color
-    screen.fill(black)
-    # get all the events that have occurred since the last frame
-    events = pygame.event.get()
-    
-    for event in events:
-        # if user clicks X to close the pygame window
-        if event.type == pygame.QUIT:
-            running = False
-        if current_screen == "data collection start":
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_RETURN:
-                    current_screen = "data collection"
-                    label_index = 0
-                    current_label = labels[label_index]
-                    current_phase = "moving"
-                    current_repetition = 1
+try:
+    # main loop
+    while running:
+        # fill the screen with black color
+        screen.fill(black)
+        # get all the events that have occurred since the last frame
+        events = pygame.event.get()
+        
+        for event in events:
+            # if user clicks X to close the pygame window
+            if event.type == pygame.QUIT:
+                running = False
+            if current_screen == "data collection start":
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_RETURN:
+                        try:
+                            myo.connect()
+                        except Exception as error:
+                            error_message = f"Error connecting to Myo: {error}"
+                        else:
+                            myo_connected = True
+                            error_message = ""
+
+                            current_screen = "data collection"
+                            label_index = 0
+                            current_label = labels[label_index]
+                            current_phase = "moving"
+                            current_repetition = 1
+                            start_time = time.monotonic()
+
+        if current_screen == "data collection":
+            elapsed_time = time.monotonic() - start_time
+
+            if current_phase == "moving":
+                if elapsed_time >= movement_duration:
+                    current_phase = "holding"
                     start_time = time.monotonic()
 
-    if current_screen == "data collection":
-        elapsed_time = time.monotonic() - start_time
+            elif current_phase == "holding":
+                if elapsed_time >= holding_duration:
+                    label_index += 1
 
-        if current_phase == "moving":
-            if elapsed_time >= movement_duration:
-                current_phase = "holding"
-                start_time = time.monotonic()
+                    if label_index >= len(labels):
+                        if current_repetition < repetitions:
+                            current_repetition += 1
+                            label_index = 0
+                        else:
+                            current_screen = "data collection complete"
 
-        elif current_phase == "holding":
-            if elapsed_time >= holding_duration:
-                label_index += 1
+                    if current_screen == "data collection":
+                        current_label = labels[label_index]
+                        current_phase = "moving"
+                        start_time = time.monotonic()
 
-                if label_index >= len(labels):
-                    if current_repetition < repetitions:
-                        current_repetition += 1
-                        label_index = 0
-                    else:
-                        current_screen = "data collection complete"
+        if current_screen == "data collection" and myo_connected:
+            myo.run()
 
-                if current_screen == "data collection":
-                    current_label = labels[label_index]
-                    current_phase = "moving"
-                    start_time = time.monotonic()
+        if current_screen == "questionnaire":
+        
+            # display welcome text on the screen
+            display_text(welcome_text, text_font_big, pygame.Color('blanchedalmond'), 50, 25)
 
-    if current_screen == "questionnaire":
-    
-        # display welcome text on the screen
-        display_text(welcome_text, text_font_big, pygame.Color('blanchedalmond'), 50, 25)
+            '''
+            https://www.youtube.com/watch?v=Rvcyf4HsWiw
+            '''
+            # display get participant ID prompt on the screen
+            id_text_surface = text_font_medium.render(p_id_prompt, True, white)
+            screen.blit(id_text_surface, (50, 75))
 
-        '''
-        https://www.youtube.com/watch?v=Rvcyf4HsWiw
-        '''
-        # display get participant ID prompt on the screen
-        id_text_surface = text_font_medium.render(p_id_prompt, True, white)
-        screen.blit(id_text_surface, (50, 75))
+            # display get participant age prompt on the screen
+            age_text_surface = text_font_medium.render(p_age_prompt, True, white)
+            screen.blit(age_text_surface, (50, 155))
 
-        # display get participant age prompt on the screen
-        age_text_surface = text_font_medium.render(p_age_prompt, True, white)
-        screen.blit(age_text_surface, (50, 155))
+            # display get participant gender prompt on the screen
+            gender_text_surface = text_font_medium.render(p_gender_prompt, True, white)
+            screen.blit(gender_text_surface, (50, 235))
 
-        # display get participant gender prompt on the screen
-        gender_text_surface = text_font_medium.render(p_gender_prompt, True, white)
-        screen.blit(gender_text_surface, (50, 235))
+            # display get participant height prompt on the screen
+            height_text_surface = text_font_medium.render(p_height_prompt, True, white)
+            screen.blit(height_text_surface, (50, 315))
 
-        # display get participant height prompt on the screen
-        height_text_surface = text_font_medium.render(p_height_prompt, True, white)
-        screen.blit(height_text_surface, (50, 315))
+            # display get participant weight prompt on the screen
+            weight_text_surface = text_font_medium.render(p_weight_prompt, True, white)
+            screen.blit(weight_text_surface, (50, 395))
 
-        # display get participant weight prompt on the screen
-        weight_text_surface = text_font_medium.render(p_weight_prompt, True, white)
-        screen.blit(weight_text_surface, (50, 395))
+            # display get participant wrist circumference prompt on the screen
+            wrist_text_surface = text_font_medium.render(p_wrist_prompt, True, white)
+            screen.blit(wrist_text_surface, (50, 475))
 
-        # display get participant wrist circumference prompt on the screen
-        wrist_text_surface = text_font_medium.render(p_wrist_prompt, True, white)
-        screen.blit(wrist_text_surface, (50, 475))
+            # display get participant forearm length prompt on the screen
+            forearm_text_surface = text_font_medium.render(p_forearm_prompt, True, white)
+            screen.blit(forearm_text_surface, (50, 555))
 
-        # display get participant forearm length prompt on the screen
-        forearm_text_surface = text_font_medium.render(p_forearm_prompt, True, white)
-        screen.blit(forearm_text_surface, (50, 555))
+            display_text(error_message, text_font_medium, pygame.Color('red'), 175, 655)
 
-        display_text(error_message, text_font_medium, pygame.Color('red'), 175, 655)
+        elif current_screen == "data collection start":
+            display_text("Please place your hand in a NEUTRAL position and follow the instructions on the screen.", 
+                        text_font_big, pygame.Color('blanchedalmond'), 50, 25)
+            screen.blit(neutral_image, (50, 100))
+            display_text("Press ENTER to continue.", 
+                        text_font_medium, pygame.Color('blanchedalmond'), 50, 600)
 
-    elif current_screen == "data collection start":
-        display_text("Please place your hand in a NEUTRAL position and follow the instructions on the screen.", 
-                     text_font_big, pygame.Color('blanchedalmond'), 50, 25)
-        screen.blit(neutral_image, (50, 100))
-        display_text("Press ENTER to continue.", 
-                     text_font_medium, pygame.Color('blanchedalmond'), 50, 600)
+        elif current_screen == "data collection":
+            if current_phase == "moving":
+                prompt = (f"Please CHANGE to {current_label.upper()} (3 seconds).")
+            else:
+                prompt = (f"Please HOLD {current_label.upper()} (5 seconds).")
 
-    elif current_screen == "data collection":
-        if current_phase == "moving":
-            prompt = (f"Please CHANGE to {current_label.upper()} (3 seconds).")
-        else:
-            prompt = (f"Please HOLD {current_label.upper()} (5 seconds).")
+            if current_label == "flexion":
+                current_image = flexion_image
+            elif current_label == "neutral":
+                current_image = neutral_image
+            elif current_label == "extension":
+                current_image = extension_image
 
-        if current_label == "flexion":
-            current_image = flexion_image
-        elif current_label == "neutral":
-            current_image = neutral_image
-        elif current_label == "extension":
-            current_image = extension_image
+            display_text(prompt, text_font_big, pygame.Color('blanchedalmond'), 50, 25)
+            display_text(f'Repetition: {current_repetition} of {repetitions}', 
+                        text_font_medium, white, 1000, 25)
+            screen.blit(current_image, (50, 75))
 
-        display_text(prompt, text_font_big, pygame.Color('blanchedalmond'), 50, 25)
-        display_text(f'Repetition: {current_repetition} of {repetitions}', 
-                     text_font_medium, white, 1000, 25)
-        screen.blit(current_image, (50, 75))
-
-    elif current_screen == "data collection complete":
-        display_text("Data collection complete. Thank you for participating!", 
-                     text_font_big, pygame.Color('blanchedalmond'), 250, 200)
-        display_text("You may now close the program window.", 
-                     text_font_medium, pygame.Color('blanchedalmond'), 50, 500)
+        elif current_screen == "data collection complete":
+            display_text("Data collection complete. Thank you for participating!", 
+                        text_font_big, pygame.Color('blanchedalmond'), 250, 200)
+            display_text("You may now close the program window.", 
+                        text_font_medium, pygame.Color('blanchedalmond'), 50, 500)
 
 
-    # update the textboxes and button
-    pygame_widgets.update(events)
+        # update the textboxes and button
+        pygame_widgets.update(events)
 
-    pygame.display.flip()
-    clock.tick(60)
+        pygame.display.flip()
+        clock.tick(60)
 
-# quit the program
-pygame.quit()
+except KeyboardInterrupt:
+    print("Data collection interrupted.")
+
+finally:
+    try:
+        if myo_connected:
+            myo.disconnect()
+            print("Myo disconnected.")
+    finally:
+        # quit the program
+        pygame.quit()
