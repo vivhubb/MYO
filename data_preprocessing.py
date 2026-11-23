@@ -1,4 +1,5 @@
 import csv
+from pathlib import Path
 
 # session files
 session_files = [
@@ -20,6 +21,8 @@ session_files = [
 headers = ["timestamp","name","session","label","phase","repetition","fatigue",
            "ch_01","ch_02","ch_03","ch_04","ch_05","ch_06","ch_07","ch_08"]
 
+
+# ====================== COMBINE CSV ======================
 # function to combine and clean CSV session files
 def combine_cleaned_csv():
     # create combined csv file
@@ -38,8 +41,20 @@ def combine_cleaned_csv():
                 for row in reader:
                     if row["phase"].strip() == "moving":
                         continue
+                    if row["label"].strip() == "neutral":
+                        continue
 
                     # write row
                     csv_writer.writerow([row[column] for column in headers])
 
-combine_cleaned_csv()
+# path to combined csv
+file_path = Path("data/combine_data.csv")
+# only action this funciton if the combined file doesn't already exist
+if not file_path.exists():
+    combine_cleaned_csv()
+
+
+# ====================== SLIDING WINDOWS ======================
+# non-overlapping sliding window
+
+# overlapping sliding window
